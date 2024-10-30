@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Arduino Circuit Builder</title>
+        <style>
+        :root {
+          --primary: #00979C;
+          --secondary: #E47128;
+          --dark: #333;
+          --light: #f5f5f5;
+          --blue: #2196F3;
+        }
+        
+        body {
+          font-family: 'Arial', sans-serif;
+          margin: 0;
+          padding: 20px;
+          background: var(--light);
+          color: var(--dark);
+        }
+        
+        .container {
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+        
+        .header {
+          text-align: center;
+          padding: 20px;
+          background: white;
+          border-radius: 10px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          margin-bottom: 20px;
+        }
+        
+        .circuit-container {
+          background: white;
+          padding: 20px;
+          border-radius: 10px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .connection-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 20px 0;
+        }
+        
+        .connection-table th,
+        .connection-table td {
+          border: 1px solid #ddd;
+          padding: 12px;
+          text-align: left;
+        }
+        
+        .connection-table th {
+          background-color: var(--primary);
+          color: white;
+        }
+        
+        .connection-table tr:nth-child(even) {
+          background-color: #f9f9f9;
+        }
+        
+        .component-section {
+          margin: 20px 0;
+          padding: 15px;
+          background: #f8f9fa;
+          border-radius: 5px;
+          border-left: 4px solid var(--blue);
+        }
+        
+        .warning {
+          background: #ffebee;
+          padding: 15px;
+          border-radius: 5px;
+          border-left: 4px solid #d32f2f;
+          margin: 20px 0;
+        }
+        
+        .code-section {
+          background: #263238;
+          color: #fff;
+          padding: 20px;
+          border-radius: 5px;
+          overflow-x: auto;
+          margin: 20px 0;
+        }
+        
+        .code-section pre {
+          margin: 0;
+          white-space: pre-wrap;
+        }
+        
+        .circuit-image {
+          width: 100%;
+          max-width: 800px;
+          margin: 20px auto;
+          display: block;
+          border-radius: 5px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .tabs {
+          display: flex;
+          margin: 20px 0;
+          border-bottom: 2px solid var(--primary);
+        }
+        
+        .tab {
+          padding: 10px 20px;
+          cursor: pointer;
+          background: #f0f0f0;
+          border: none;
+          margin-right: 5px;
+          border-radius: 5px 5px 0 0;
+        }
+        
+        .tab.active {
+          background: var(--primary);
+          color: white;
+        }
+        
+        .simulator-container {
+          display: flex;
+          gap: 20px;
+          margin: 20px 0;
+        }
+        
+        .components-panel {
+          flex: 1;
+          background: white;
+          padding: 20px;
+          border-radius: 10px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          max-height: 800px;
+          overflow-y: auto;
+        }
+        
+        .simulation-area {
+          flex: 2;
+          background: white;
+          padding: 20px;
+          border-radius: 10px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          min-height: 400px;
+        }
+        
+        .component-list {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+          gap: 15px;
+          max-height: 500px;
+          overflow-y: auto;
+          padding: 10px;
+        }
+        
+        .component-card {
+          background: white;
+          border-radius: 8px;
+          padding: 15px;
+          margin: 10px;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          cursor: pointer;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .component-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .component-icon {
+          width: 50px;
+          height: 50px;
+        }
+        
+        .component-info {
+          flex: 1;
+        }
+        
+        .component-info h3 {
+          margin: 0 0 5px 0;
+          color: var(--primary);
+        }
+        
+        .component-info p {
+          margin: 0;
+          font-size: 0.9em;
+          color: #666;
+        }
+        
+        .board-selector {
+          width: 100%;
+          padding: 10px;
+          margin-bottom: 20px;
+          border: 1px solid #ddd;
+          border-radius: 5px;
+        }
+        
+        .code-editor {
+          width: 100%;
+          height: 300px;
+          background: #1e1e1e;
+          color: #fff;
+          font-family: 'Consolas', monospace;
+          padding: 10px;
+          border: none;
+          border-radius: 5px;
+          resize: vertical;
+        }
+        
+        .button {
+          background: var(--primary);
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 5px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+        
+        .button:hover {
+          background: var(--secondary);
+        }
+        
+        .gear-motor-animation {
+          animation: rotate 1s infinite linear;
+        }
+        
+        @keyframes pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+          100% { transform: scale(1); }
+        }
+        
+        @keyframes rotate {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        
+        @keyframes blink {
+          0% { opacity: 1; }
+          50% { opacity: 0.5; }
+          100% { opacity: 1; }
+        }
+        
+        @keyframes motor-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        
+        .report-modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0,0,0,0.7);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+        }
+        
+        .report-content {
+          background: white;
+          padding: 20px;
+          border-radius: 10px;
+          max-width: 800px;
+          max-height: 80vh;
+          overflow-y: auto;
+          position: relative;
+        }
+        
+        .report-content h2 {
+          color: var(--primary);
+          margin-bottom: 20px;
+        }
+        
+        .report-content .warning {
+          color: #d32f2f;
+        }
+        
+        .report-content .suggestion {
+          color: #1976d2;
+        }
+        
+        .lesson-plan {
+          background: #f5f5f5;
+          padding: 15px;
+          border-radius: 5px;
+          margin: 10px 0;
+        }
+        
+        .simulating {
+          background: #ff5722 !important;
+        }
+        
+        .component-active {
+          animation: pulse 1s infinite;
+        }
+        </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Arduino Circuit Builder</h1>
+              <p>Construa e simule seus circuitos Arduino</p>
+            </div>
+        
+            <div class="simulator-container">
+              <div class="components-panel">
+                <h2>Componentes Disponíveis</h2>
+                <select class="board-selector">
+                  <option value="uno">Arduino UNO</option>
+                  <option value="mega">Arduino MEGA</option>
+                  <option value="nano">Arduino NANO</option>
+                  <option value="micro">Arduino Micro</option>
+                  <option value="leonardo">Arduino Leonardo</option>
+                  <option value="due">Arduino Due</option>
+                  <option value="yun">Arduino Yún</option>
+                  <option value="pro">Arduino Pro Mini</option>
+                </select>
+                
+                <div class="component-list">
+                  <div class="component-card" draggable="true" data-component="arduino">
+                    <svg class="component-icon" viewBox="0 0 24 24">
+                      <rect x="2" y="6" width="20" height="12" fill="#00979C" rx="2"/>
+                      <circle cx="6" cy="12" r="2" fill="#fff"/>
+                      <circle cx="12" cy="12" r="2" fill="#fff"/>
+                      <circle cx="18" cy="12" r="2" fill="#fff"/>
+                    </svg>
+                    <div class="component-info">
+                      <h3>Arduino UNO</h3>
+                      <p>Placa principal</p>
+                    </div>
+                  </div>
+        
+                  <div class="component-card" draggable="true" data-component="arduino-mega">
+                    <svg class="component-icon" viewBox="0 0 24 24">
+                      <rect x="2" y="4" width="20" height="16" fill="#00979C" rx="2"/>
+                      <circle cx="6" cy="8" r="1.5" fill="#fff"/>
+                      <circle cx="6" cy="12" r="1.5" fill="#fff"/>
+                      <circle cx="6" cy="16" r="1.5" fill="#fff"/>
+                      <circle cx="18" cy="8" r="1.5" fill="#fff"/>
+                      <circle cx="18" cy="12" r="1.5" fill="#fff"/>
+                      <circle cx="18" cy="16" r="1.5" fill="#fff"/>
+                    </svg>
+                    <div class="component-info">
+                      <h3>Arduino MEGA</h3>
+                      <p>54 pinos digitais</p>
+                    </div>
+                  </div>
+        
+                  <div class="component-card" draggable="true" data-component="arduino-nano">
+                    <svg class="component-icon" viewBox="0 0 24 24">
+                      <rect x="4" y="6" width="16" height="12" fill="#00979C" rx="2"/>
+                      <circle cx="8" cy="12" r="1.5" fill="#fff"/>
+                      <circle cx="12" cy="12" r="1.5" fill="#fff"/>
+                      <circle cx="16" cy="12" r="1.5" fill="#fff"/>
+                    </svg>
+                    <div class="component-info">
+                      <h3>Arduino NANO</h3>
+                      <p>Formato compacto</p>
+                    </div>
+                  </div>
+        
+                  <div class="component-card" draggable="true" data-component="arduino-leonardo">
+                    <svg class="component-icon" viewBox="0 0 24 24">
+                      <rect x="2" y="6" width="20" height="12" fill="#00979C" rx="2"/>
+                      <circle cx="7" cy="12" r="1.5" fill="#fff"/>
+                      <circle cx="12" cy="12" r="1.5" fill="#fff"/>
+                      <circle cx="17" cy="12" r="1.5" fill="#fff"/>
+                    </svg>
+                    <div class="component-info">
+                      <h3>Arduino Leonardo</h3>
+                      <p>USB nativo</p>
+                    </div>
+                  </div>
+        
+                  <div class="component-card" draggable="true" data-component="arduino-micro">
+                    <svg class="component-icon" viewBox="0 0 24 24">
+                      <rect x="4" y="8" width="16" height="8" fill="#00979C" rx="1"/>
+                      <circle cx="8" cy="12" r="1" fill="#fff"/>
+                      <circle cx="12" cy="12" r="1" fill="#fff"/>
+                      <circle cx="16" cy="12" r="1" fill="#fff"/>
+                    </svg>
+                    <div class="component-info">
+                      <h3>Arduino Micro</h3>
+                      <p>Ultra compacto</p>
+                    </div>
+                  </div>
+        
+                  <div class="component-card" draggable="true" data-component="l298n">
+                    <svg class="component-icon" viewBox="0 0 24 24">
+                      <rect x="4" y="4" width="16" height="16" fill="#E47128"/>
+                      <rect x="7" y="7" width="4" height="4" fill="#fff"/>
+                      <rect x="13" y="7" width="4" height="4" fill="#fff"/>
+                      <rect x="7" y="13" width="4" height="4" fill="#fff"/>
+                      <rect x="13" y="13" width="4" height="4" fill="#fff"/>
+                    </svg>
+                    <div class="component-info">
+                      <h3>Ponte H L298N</h3>
+                      <p>Controle de motores DC</p>
+                    </div>
+                  </div>
+        
+                  <div class="component-card" draggable="true" data-component="bluetooth">
+                    <svg class="component-icon" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="8" fill="#2196F3"/>
+                      <path d="M8 12 h8 M12 8 v8" stroke="white" stroke-width="2"/>
+                    </svg>
+                    <div class="component-info">
+                      <h3>Módulo Bluetooth HC-05</h3>
+                      <p>Comunicação sem fio</p>
+                    </div>
+                  </div>
+        
+                  <div class="component-card" draggable="true" data-component="ultrasonic">
+                    <svg class="component-icon" viewBox="0 0 24 24">
+                      <path d="M12 4 L12 20 M4 12 L20 12" stroke="#333" stroke-width="2"/>
+                      <circle cx="12" cy="12" r="4" fill="#2196F3"/>
+                    </svg>
+                    <div class="component-info">
+                      <h3>Sensor Ultrassônico HC-SR04</h3>
+                      <p>Medição de distância</p>
+                    </div>
+                  </div>
+        
+                  <div class="component-card" draggable="true" data-component="servo">
+                    <svg class="component-icon" viewBox="0 0 24 24">
+                      <rect x="4" y="8" width="16" height="8" fill="#607D8B"/>
+                      <circle cx="12" cy="12" r="4" fill="#fff"/>
+                      <rect x="10" y="4" width="4" height="16" fill="#fff"/>
+                    </svg>
+                    <div class="component-info">
+                      <h3>Servo Motor</h3>
+                      <p>Controle de posição</p>
+                    </div>
+                  </div>
+        
+                  <div class="component-card" draggable="true" data-component="dcmotor">
+                    <svg class="component-icon" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="8" fill="#795548"/>
+                      <circle cx="12" cy="12" r="2" fill="#fff"/>
+                      <rect x="11" y="4" width="2" height="16" fill="#fff"/>
+                    </svg>
+                    <div class="component-info">
+                      <h3>Motor DC</h3>
+                      <p>Motor de engrenagem</p>
+                    </div>
+                  </div>
+        
+                  <div class="component-card" draggable="true" data-component="led">
+                    <svg class="component-icon" viewBox="0 0 24 24">
+                      <path d="M12 4 L12 20" stroke="#F44336" stroke-width="2"/>
+                      <circle cx="12" cy="12" r="4" fill="#F44336"/>
+                    </svg>
+                    <div class="component-info">
+                      <h3>LED</h3>
+                      <p>Diodo emissor de luz</p>
+                    </div>
+                  </div>
+        
+                  <div class="component-card" draggable="true" data-component="gear-motor">
+                    <svg class="component-icon" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="8" fill="#795548"/>
+                      <circle cx="12" cy="12" r="4" fill="#5D4037"/>
+                      <path d="M12 4 L12 20 M4 12 L20 12" stroke="#8D6E63" stroke-width="2"/>
+                      <circle cx="12" cy="12" r="1" fill="#fff"/>
+                    </svg>
+                    <div class="component-info">
+                      <h3>Motor de Engrenagem Grande</h3>
+                      <p>Motor DC com redução</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+        
+              <div class="simulation-area">
+                <div id="circuit-canvas" style="height: 400px; border: 2px dashed #ddd; margin-bottom: 20px; position: relative;">
+                  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #999;">
+                    Arraste os componentes para esta área para montar seu circuito
+                  </div>
+                </div>
+                <textarea class="code-editor" placeholder="// Seu código Arduino aqui..."></textarea>
+                <div style="margin-top: 10px;">
+                  <button class="button verify-code">Verificar Código</button>
+                  <button class="button simulate">Iniciar Simulação</button>
+                  <button class="button save">Salvar Projeto</button>
+                  <button class="button export">Exportar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          const components = document.querySelectorAll('.component-card');
+          const circuitCanvas = document.getElementById('circuit-canvas');
+          let placedComponents = [];
+          
+          const COMPONENT_LIBRARIES = {
+            'l298n': '#include <L298N.h>\n#include <Wire.h>',
+            'bluetooth': '#include <SoftwareSerial.h>\n#include <BluetoothSerial.h>',
+            'ultrasonic': '#include <NewPing.h>',
+            'arduino': '#include <Arduino.h>',
+            'arduino-mega': '#include <Arduino.h>\n#include <EEPROM.h>',
+            'arduino-nano': '#include <Arduino.h>',
+            'arduino-leonardo': '#include <Arduino.h>\n#include <Keyboard.h>',
+            'arduino-micro': '#include <Arduino.h>\n#include <Mouse.h>',
+            'servo': '#include <Servo.h>',
+            'dcmotor': '#include <DCMotor.h>',
+            'gear-motor': '#include <DCMotor.h>\n#include <Gearbox.h>'
+          };
+        
+          const COMPONENT_SETUP_CODE = {
+            'l298n': `
+        // L298N pins
+        const int ENA = 10;
+        const int IN1 = 9;
+        const int IN2 = 8;
+        L298N motor(ENA, IN1, IN2);`,
+            'bluetooth': `
+        // Bluetooth module pins
+        const int BT_RX = 2;
+        const int BT_TX = 3;
+        SoftwareSerial bluetooth(BT_RX, BT_TX);`,
+            'ultrasonic': `
+        // Ultrasonic sensor pins
+        const int TRIG_PIN = 12;
+        const int ECHO_PIN = 11;
+        NewPing sonar(TRIG_PIN, ECHO_PIN, 400);`,
+            'servo': `
+        // Servo configuration
+        Servo myservo;
+        const int SERVO_PIN = 9;`,
+            'dcmotor': `
+        // DC Motor pins
+        const int MOTOR_PIN = 5;
+        const int MOTOR_DIR = 4;`,
+            'led': `
+        // LED pin
+        const int LED_PIN = 13;`,
+            'gear-motor': `
+        // Gear Motor pins
+        const int GEAR_MOTOR_PIN = 6;
+        const int GEAR_MOTOR_DIR = 7;
+        const int GEAR_MOTOR_EN = 8;`
+          };
+        
+          function generateArduinoCode() {
+            let libraries = new Set();
+            let setupCode = [];
+            let loopCode = [];
+            
+            libraries.add('#include <Arduino.h>');
+            
+            placedComponents.forEach(comp => {
+              if (COMPONENT_LIBRARIES[comp.type]) {
+                libraries.add(COMPONENT_LIBRARIES[comp.type]);
+              }
+              if (COMPONENT_SETUP_CODE[comp.type]) {
+                setupCode.push(COMPONENT_SETUP_CODE[comp.type]);
+              }
+              
+              switch(comp.type) {
+                case 'ultrasonic':
+                  loopCode.push('  int distance = sonar.ping_cm();');
+                  loopCode.push('  Serial.print("Distance: ");');
+                  loopCode.push('  Serial.println(distance);');
+                  break;
+                case 'bluetooth':
+                  loopCode.push('  if (bluetooth.available()) {');
+                  loopCode.push('    char cmd = bluetooth.read();');
+                  loopCode.push('    Serial.println(cmd);');
+                  loopCode.push('  }');
+                  break;
+                case 'servo':
+                  setupCode.push('  myservo.attach(SERVO_PIN);');
+                  loopCode.push('  myservo.write(90);  // Set to middle position');
+                  break;
+                case 'dcmotor':
+                  setupCode.push('  pinMode(MOTOR_PIN, OUTPUT);');
+                  setupCode.push('  pinMode(MOTOR_DIR, OUTPUT);');
+                  loopCode.push('  analogWrite(MOTOR_PIN, 128);  // Half speed');
+                  break;
+                case 'led':
+                  setupCode.push('  pinMode(LED_PIN, OUTPUT);');
+                  loopCode.push('  digitalWrite(LED_PIN, HIGH);');
+                  break;
+                case 'gear-motor':
+                  setupCode.push('  pinMode(GEAR_MOTOR_PIN, OUTPUT);');
+                  setupCode.push('  pinMode(GEAR_MOTOR_DIR, OUTPUT);');
+                  setupCode.push('  pinMode(GEAR_MOTOR_EN, OUTPUT);');
+                  loopCode.push('  digitalWrite(GEAR_MOTOR_EN, HIGH);');
+                  loopCode.push('  analogWrite(GEAR_MOTOR_PIN, 200);  // High speed');
+                  break;
+              }
+            });
+        
+            const code = `${Array.from(libraries).join('\n')}
+        
+        ${setupCode.join('\n')}
+        
+        void setup() {
+          Serial.begin(9600);
+          ${setupCode.join('\n  ')}
+        }
+        
+        void loop() {
+        ${loopCode.join('\n')}
+          delay(100);
+        }`;
+        
+            document.querySelector('.code-editor').value = code;
+          }
+        
+          components.forEach(component => {
+            component.addEventListener('dragstart', (e) => {
+              e.dataTransfer.setData('text/plain', JSON.stringify({
+                name: component.querySelector('.component-info h3').textContent,
+                type: component.dataset.component
+              }));
+            });
+          });
+        
+          circuitCanvas.addEventListener('dragover', (e) => {
+            e.preventDefault();
+          });
+        
+          circuitCanvas.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+            const newComponent = document.createElement('div');
+            newComponent.className = 'placed-component';
+            newComponent.dataset.type = data.type;
+            newComponent.innerHTML = `
+              <div class="component-header">${data.name}</div>
+              <div class="component-pins"></div>
+            `;
+            newComponent.style.position = 'absolute';
+            newComponent.style.left = (e.offsetX) + 'px';
+            newComponent.style.top = (e.offsetY) + 'px';
+            newComponent.style.background = '#fff';
+            newComponent.style.padding = '10px';
+            newComponent.style.border = '1px solid #ddd';
+            newComponent.style.borderRadius = '5px';
+            newComponent.style.cursor = 'move';
+            
+            circuitCanvas.appendChild(newComponent);
+            placedComponents.push({
+              type: data.type,
+              element: newComponent,
+              position: { x: e.offsetX, y: e.offsetY }
+            });
+        
+            makeDraggable(newComponent);
+            makeRemovable(newComponent);
+            generateArduinoCode();
+          });
+        
+          function makeDraggable(element) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            element.onmousedown = dragMouseDown;
+        
+            function dragMouseDown(e) {
+              e.preventDefault();
+              pos3 = e.clientX;
+              pos4 = e.clientY;
+              document.onmouseup = closeDragElement;
+              document.onmousemove = elementDrag;
+            }
+        
+            function elementDrag(e) {
+              e.preventDefault();
+              pos1 = pos3 - e.clientX;
+              pos2 = pos4 - e.clientY;
+              pos3 = e.clientX;
+              pos4 = e.clientY;
+              element.style.top = (element.offsetTop - pos2) + "px";
+              element.style.left = (element.offsetLeft - pos1) + "px";
+            }
+        
+            function closeDragElement() {
+              document.onmouseup = null;
+              document.onmousemove = null;
+            }
+          }
+        
+          function makeRemovable(element) {
+            const removeBtn = document.createElement('button');
+            removeBtn.innerHTML = '×';
+            removeBtn.style.cssText = `
+              position: absolute;
+              top: -8px;
+              right: -8px;
+              background: red;
+              color: white;
+              border: none;
+              border-radius: 50%;
+              width: 20px;
+              height: 20px;
+              cursor: pointer;
+            `;
+            
+            removeBtn.onclick = (e) => {
+              e.stopPropagation();
+              element.remove();
+              placedComponents = placedComponents.filter(comp => comp.element !== element);
+              generateArduinoCode();
+            };
+            
+            element.appendChild(removeBtn);
+          }
+        
+          function generateReport() {
+            const report = {
+              title: 'Relatório do Projeto Arduino',
+              components: placedComponents.map(c => c.type),
+              analysis: {
+                complexity: 'Básico',
+                warnings: [],
+                suggestions: []
+              },
+              lessonPlan: {
+                titulo: 'Plano de Aula - Circuito Arduino',
+                duracao: '2 horas',
+                objetivos: [
+                  'Compreender os princípios básicos de Arduino',
+                  'Aprender montagem de circuitos eletrônicos',
+                  'Desenvolver lógica de programação'
+                ],
+                conteudo: [
+                  'Introdução ao Arduino',
+                  'Componentes eletrônicos básicos',
+                  'Programação em C/C++',
+                  'Montagem prática do circuito'
+                ],
+                metodologia: 'Aula prática com demonstração e exercícios',
+                avaliacao: 'Projeto prático individual'
+              }
+            };
+            
+            displayReport(report);
+          }
+        
+          function displayReport(report) {
+            const modal = document.createElement('div');
+            modal.className = 'report-modal';
+            modal.innerHTML = `
+              <div class="report-content">
+                <h2>${report.title}</h2>
+                
+                <h3>Componentes Utilizados:</h3>
+                <ul>
+                  ${report.components.map(c => `<li>${c}</li>`).join('')}
+                </ul>
+                
+                <h3>Análise do Circuito:</h3>
+                <p>Complexidade: ${report.analysis.complexity}</p>
+                <ul>
+                  ${report.analysis.warnings.map(w => `<li class="warning">${w}</li>`).join('')}
+                  ${report.analysis.suggestions.map(s => `<li class="suggestion">${s}</li>`).join('')}
+                </ul>
+                
+                <h3>Plano de Aula:</h3>
+                <div class="lesson-plan">
+                  <h4>${report.lessonPlan.titulo}</h4>
+                  <p><strong>Duração:</strong> ${report.lessonPlan.duracao}</p>
+                  <h5>Objetivos:</h5>
+                  <ul>
+                    ${report.lessonPlan.objetivos.map(o => `<li>${o}</li>`).join('')}
+                  </ul>
+                  <h5>Conteúdo:</h5>
+                  <ul>
+                    ${report.lessonPlan.conteudo.map(c => `<li>${c}</li>`).join('')}
+                  </ul>
+                  <h5>Metodologia:</h5>
+                  <p>${report.lessonPlan.metodologia}</p>
+                  <h5>Avaliação:</h5>
+                  <p>${report.lessonPlan.avaliacao}</p>
+                </div>
+                
+                <button onclick="this.parentElement.parentElement.remove()">Fechar</button>
+              </div>
+            `;
+            document.body.appendChild(modal);
+          }
+        
+          function verifyCode() {
+            const code = document.querySelector('.code-editor').value;
+            let errors = [];
+            
+            if (!code.includes('void setup()')) {
+              errors.push('Função setup() não encontrada');
+            }
+            if (!code.includes('void loop()')) {
+              errors.push('Função loop() não encontrada');
+            }
+            
+            if (errors.length > 0) {
+              alert('Erros encontrados:\n' + errors.join('\n'));
+            } else {
+              generateReport();
+            }
+          }
+        
+          // Button handlers
+          document.querySelector('.verify-code').addEventListener('click', () => {
+            verifyCode();
+          });
+        
+          const simButton = document.querySelector('.simulate');
+          simButton.addEventListener('click', () => {
+            const isSimulating = simButton.classList.toggle('simulating');
+            if (isSimulating) {
+              simButton.textContent = 'Parar Simulação';
+              startSimulation();
+            } else {
+              simButton.textContent = 'Iniciar Simulação';
+              stopSimulation();
+            }
+          });
+        
+          function startSimulation() {
+            const code = document.querySelector('.code-editor').value;
+            const components = placedComponents.map(comp => comp.type);
+            
+            if (!validateConnections()) {
+              alert('Erro: Verifique as conexões do circuito');
+              return;
+            }
+        
+            circuitCanvas.style.border = '2px solid #00979C';
+            
+            placedComponents.forEach(comp => {
+              animateComponent(comp);
+            });
+          }
+        
+          function stopSimulation() {
+            circuitCanvas.style.border = '2px dashed #ddd';
+            placedComponents.forEach(comp => {
+              comp.element.style.animation = 'none';
+            });
+          }
+        
+          function validateConnections() {
+            const requiredPairs = {
+              'l298n': ['arduino', 'arduino-mega', 'arduino-nano', 'arduino-leonardo', 'arduino-micro'],
+              'bluetooth': ['arduino', 'arduino-mega', 'arduino-nano', 'arduino-leonardo', 'arduino-micro'],
+              'ultrasonic': ['arduino', 'arduino-mega', 'arduino-nano', 'arduino-leonardo', 'arduino-micro'],
+              'servo': ['arduino', 'arduino-mega', 'arduino-nano', 'arduino-leonardo', 'arduino-micro'],
+              'dcmotor': ['arduino', 'arduino-mega', 'arduino-nano', 'arduino-leonardo', 'arduino-micro'],
+              'led': ['arduino', 'arduino-mega', 'arduino-nano', 'arduino-leonardo', 'arduino-micro'],
+              'gear-motor': ['arduino', 'arduino-mega', 'l298n']
+            };
+            
+            const componentTypes = placedComponents.map(c => c.type);
+            
+            const hasArduino = componentTypes.some(type => type.includes('arduino'));
+            if (!hasArduino) {
+              alert('É necessário ter uma placa Arduino no circuito');
+              return false;
+            }
+            
+            return true;
+          }
+        
+          function animateComponent(component) {
+            const elem = component.element;
+            
+            switch(component.type) {
+              case 'ultrasonic':
+                elem.classList.add('component-active');
+                break;
+              case 'l298n':
+                elem.style.animation = 'rotate 1s infinite linear';
+                break;
+              case 'bluetooth':
+                elem.style.animation = 'blink 1s infinite';
+                break;
+              case 'servo':
+                elem.style.animation = 'rotate 2s ease-in-out infinite';
+                break;
+              case 'dcmotor':
+                elem.style.animation = 'rotate 0.5s linear infinite';
+                break;
+              case 'led':
+                elem.style.animation = 'blink 1s infinite';
+                break;
+              case 'gear-motor':
+                elem.style.animation = 'motor-spin 0.5s linear infinite';
+                break;
+            }
+          }
+          
+          const codeEditor = document.querySelector('.code-editor');
+          codeEditor.value = `void setup() {
+          // Configuração inicial
+          Serial.begin(9600);
+          
+          // Configure pins
+          pinMode(LED_BUILTIN, OUTPUT);
+        }
+        
+        void loop() {
+          // Seu código aqui
+        }`;
+        });
+        </script>
+        
+        </body>
+        </html>
